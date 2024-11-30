@@ -8,55 +8,42 @@ interface GameNotificationProps {
 }
 
 const GameNotification = ({ message, type, isVisible }: GameNotificationProps) => {
-  const variants = {
-    initial: {
-      opacity: 0,
-      y: 50,
-      scale: 0.3,
-    },
-    animate: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        duration: 0.5,
-        type: "spring",
-        bounce: 0.4,
-      },
-    },
-    exit: {
-      opacity: 0,
-      scale: 0.5,
-      transition: {
-        duration: 0.2,
-      },
-    },
-  };
-
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          variants={variants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
+          initial={{ opacity: 0, y: -50, scale: 0.5 }}
+          animate={{ 
+            opacity: 1, 
+            y: 0, 
+            scale: 1,
+            transition: {
+              type: "spring",
+              stiffness: 300,
+              damping: 20
+            }
+          }}
+          exit={{ 
+            opacity: 0,
+            y: -20,
+            scale: 0.8,
+            transition: { duration: 0.2 }
+          }}
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
         >
           <div className={`
-            p-6 rounded-xl shadow-2xl backdrop-blur-md
+            game-card p-4 flex items-center gap-3
             ${type === "success" 
-              ? "bg-green-500/90 text-white" 
-              : "bg-red-500/90 text-white"
+              ? "border-green-500/30 bg-green-500/20" 
+              : "border-red-500/30 bg-red-500/20"
             }
-            flex items-center gap-4 max-w-md
           `}>
             {type === "success" ? (
-              <CheckCircle2 className="w-8 h-8 animate-pulse" />
+              <CheckCircle2 className="w-6 h-6 text-green-400 animate-pulse" />
             ) : (
-              <XCircle className="w-8 h-8 animate-pulse" />
+              <XCircle className="w-6 h-6 text-red-400 animate-pulse" />
             )}
-            <p className="text-lg font-medium">{message}</p>
+            <p className="text-lg font-medium text-white">{message}</p>
           </div>
         </motion.div>
       )}
