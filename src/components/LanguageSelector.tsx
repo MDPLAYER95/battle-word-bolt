@@ -23,24 +23,28 @@ const LanguageSelector = ({ currentLanguage, onLanguageChange }: LanguageSelecto
       animate={{ opacity: 1, y: 0 }}
     >
       <div className="relative group">
-        <button className="bg-white p-2 rounded-lg shadow-lg flex items-center gap-2">
-          <Globe className="w-5 h-5" />
-          <span>{languages.find(l => l.code === currentLanguage)?.flag}</span>
+        <button className="game-card flex items-center gap-2 p-2 hover:scale-105 transition-transform">
+          <Globe className="w-5 h-5 text-white" />
+          <span className="text-lg">{languages.find(l => l.code === currentLanguage)?.flag}</span>
         </button>
         
-        <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-          {languages.map((lang) => (
-            <button
-              key={lang.code}
-              onClick={() => onLanguageChange(lang.code)}
-              className={`w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 ${
-                currentLanguage === lang.code ? "bg-gray-50" : ""
-              }`}
-            >
-              <span>{lang.flag}</span>
-              <span>{lang.label}</span>
-            </button>
-          ))}
+        <div className="absolute right-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+          <div className="game-card p-2 space-y-1">
+            {languages.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => onLanguageChange(lang.code)}
+                className={`w-full px-4 py-2 rounded-lg flex items-center gap-2 transition-colors
+                  ${currentLanguage === lang.code 
+                    ? 'bg-primary/20 text-white' 
+                    : 'text-white/80 hover:bg-white/10 hover:text-white'
+                  }`}
+              >
+                <span className="text-xl">{lang.flag}</span>
+                <span className="text-sm font-medium">{lang.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </motion.div>
