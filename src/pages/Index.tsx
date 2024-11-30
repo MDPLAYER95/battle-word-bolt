@@ -2,14 +2,12 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import GameNotification from "@/components/GameNotification";
 import GameHistory from "@/components/GameHistory";
-import GameTimer from "@/components/GameTimer";
-import BattleAnimation from "@/components/BattleAnimation";
 import GameOverAnimation from "@/components/GameOverAnimation";
-import { Loader2 } from "lucide-react";
 import LanguageSelector from "@/components/LanguageSelector";
 import { translations, Language, TranslationKey } from "@/i18n/translations";
 import GameForm from "@/components/GameForm";
 import DifficultySelector from "@/components/DifficultySelector";
+import { Difficulty, HistoryItem } from "@/types/game";
 import { startingWords } from "@/lib/starting-words";
 
 interface GameResponse {
@@ -21,15 +19,6 @@ interface GameResponse {
   succes: boolean;
 }
 
-interface HistoryItem {
-  word: string;
-  explanation: string;
-  emoji: string;
-  isError?: boolean;
-}
-
-type Difficulty = "easy" | "medium" | "hard";
-
 const DIFFICULTY_SETTINGS = {
   easy: { time: 60 },
   medium: { time: 30 },
@@ -37,21 +26,15 @@ const DIFFICULTY_SETTINGS = {
 };
 
 const Index = () => {
-  const [currentLanguage, setCurrentLanguage] = useState<Language>(() => {
-    const browserLang = navigator.language.split('-')[0];
-    return (browserLang in translations ? browserLang : 'en') as Language;
-  });
-
+  const [currentLanguage, setCurrentLanguage] = useState<Language>("fr");
   const [currentWord, setCurrentWord] = useState(startingWords[currentLanguage].word);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
-  const [history, setHistory] = useState<HistoryItem[]>([
-    {
-      word: startingWords[currentLanguage].word,
-      explanation: translations[currentLanguage].initialWord,
-      emoji: startingWords[currentLanguage].emoji
-    }
-  ]);
+  const [history, setHistory] = useState<HistoryItem[]>([{
+    word: startingWords[currentLanguage].word,
+    explanation: translations[currentLanguage].initialWord,
+    emoji: startingWords[currentLanguage].emoji
+  }]);
   const [inputWord, setInputWord] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState({
@@ -63,6 +46,8 @@ const Index = () => {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [timerPaused, setTimerPaused] = useState(false);
+  const [lastMove, setLastMove] = useState<HistoryItem | undefined>();
+  const [isTimeUp, setIsTimeUp] = useState(false);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -71,7 +56,8 @@ const Index = () => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             setGameOver(true);
-            showNotification(t("gameOver"), "error");
+            setIsTimeUp(true);
+            showNotification(t("timeUp"), "error");
             return 0;
           }
           return prev - 1;
@@ -80,19 +66,6 @@ const Index = () => {
     }
     return () => clearInterval(timer);
   }, [gameStarted, timeLeft, timerPaused]);
-
-  // Effect to handle language changes
-  useEffect(() => {
-    if (!gameStarted) {
-      const startingWord = startingWords[currentLanguage];
-      setCurrentWord(startingWord.word);
-      setHistory([{
-        word: startingWord.word,
-        explanation: translations[currentLanguage].initialWord,
-        emoji: startingWord.emoji
-      }]);
-    }
-  }, [currentLanguage, gameStarted]);
 
   const showNotification = (message: string, type: "success" | "error") => {
     setNotification({ message, type, isVisible: true });
@@ -116,6 +89,8 @@ const Index = () => {
     setInputWord("");
     setTimeLeft(0);
     setTimerPaused(false);
+    setLastMove(undefined);
+    setIsTimeUp(false);
   };
 
   const startGame = (selectedDifficulty: Difficulty) => {
@@ -161,21 +136,24 @@ const Index = () => {
           setTimeLeft(DIFFICULTY_SETTINGS[difficulty].time);
         }
         setScore(prev => prev + 1);
-        setHistory(prev => [...prev, { 
+        const newMove = { 
           word: inputWord,
           explanation: data.explication_pour_ou_contre,
           emoji: data.smiley_correspondant_au_mot
-        }]);
+        };
+        setHistory(prev => [...prev, newMove]);
         setCurrentWord(inputWord);
         showNotification(data.explication_pour_ou_contre, "success");
         setTimerPaused(false);
       } else {
-        setHistory(prev => [...prev, { 
+        const failedMove = { 
           word: inputWord,
           explanation: data.explication_pour_ou_contre,
           emoji: "💀",
           isError: true
-        }]);
+        };
+        setHistory(prev => [...prev, failedMove]);
+        setLastMove(failedMove);
         showNotification(data.explication_pour_ou_contre, "error");
         setGameOver(true);
       }
@@ -205,11 +183,13 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-game-background to-white p-4">
-      <LanguageSelector 
-        currentLanguage={currentLanguage}
-        onLanguageChange={setCurrentLanguage}
-      />
+    <div className="min-h-screen p-4">
+      {!gameStarted && (
+        <LanguageSelector 
+          currentLanguage={currentLanguage}
+          onLanguageChange={setCurrentLanguage}
+        />
+      )}
 
       <GameNotification 
         message={notification.message}
@@ -217,7 +197,14 @@ const Index = () => {
         isVisible={notification.isVisible}
       />
       
-      {gameOver && <GameOverAnimation score={score} onRestart={resetGame} />}
+      {gameOver && (
+        <GameOverAnimation 
+          score={score} 
+          onRestart={resetGame}
+          lastMove={lastMove}
+          timeUp={isTimeUp}
+        />
+      )}
       
       <GameForm
         currentWord={currentWord}
