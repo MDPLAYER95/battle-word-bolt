@@ -27,78 +27,84 @@ const GameForm = ({
   difficulty,
   t
 }: GameFormProps) => {
-  const DIFFICULTY_SETTINGS = {
-    easy: { time: 60 },
-    medium: { time: 30 },
-    hard: { time: 15 }
+  // Get the current emoji from the history
+  const getCurrentEmoji = () => {
+    // This is a simple mapping for demonstration. You should get the actual emoji from your history
+    const emojiMap: Record<string, string> = {
+      "Pierre": "🪨",
+      "Stone": "🪨",
+      "Stein": "🪨",
+      "Piedra": "🪨",
+      "Pietra": "🪨",
+      // Add more mappings as needed
+    };
+    return emojiMap[currentWord] || "❓";
   };
 
   return (
     <motion.div 
-      className="max-w-lg mx-auto space-y-6"
+      className="max-w-2xl mx-auto space-y-8"
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
     >
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-game-primary mb-2">{t("title")}</h1>
-        <div className="text-2xl font-semibold text-game-secondary mb-4">
-          {t("score")}: {score}
+      <div className="text-center space-y-4">
+        <h1 className="text-5xl font-bold neon-glow bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">
+          {t("title")}
+        </h1>
+        <div className="text-3xl font-bold text-white/90">
+          {t("score")}: <span className="text-primary">{score}</span>
         </div>
         
         <GameTimer 
           timeLeft={timeLeft} 
-          maxTime={DIFFICULTY_SETTINGS[difficulty].time} 
+          maxTime={difficulty === 'easy' ? 60 : difficulty === 'medium' ? 30 : 15}
         />
       </div>
 
-      <motion.form 
-        onSubmit={onSubmit} 
-        className="space-y-4"
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
+      <motion.div 
+        className="game-card"
+        whileHover={{ scale: 1.02 }}
+        transition={{ type: "spring", stiffness: 300 }}
       >
-        <motion.div 
-          className="bg-white p-6 rounded-xl shadow-lg"
-          whileHover={{ y: -2 }}
-          transition={{ type: "spring", stiffness: 300 }}
-        >
-          <p className="text-sm text-gray-600 mb-2">{t("currentWord")}:</p>
-          <div className="flex flex-col items-center gap-4">
-            <motion.div 
-              className="text-8xl mb-2"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ 
-                type: "spring",
-                bounce: 0.5,
-                duration: 0.5
-              }}
-            >
-              {currentWord}
-            </motion.div>
-          </div>
-        </motion.div>
+        <p className="text-sm text-white/60 mb-2">{t("currentWord")}:</p>
+        <div className="flex flex-col items-center gap-4">
+          <motion.div 
+            className="flex flex-col items-center gap-2"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ 
+              type: "spring",
+              bounce: 0.5,
+              duration: 0.5
+            }}
+          >
+            <span className="text-8xl animate-float">{getCurrentEmoji()}</span>
+            <span className="text-3xl text-white/90 font-medium">{currentWord}</span>
+          </motion.div>
+        </div>
+      </motion.div>
 
-        <div className="flex gap-2">
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="flex gap-3">
           <motion.input
             type="text"
             value={inputWord}
             onChange={(e) => setInputWord(e.target.value)}
             placeholder={t("inputPlaceholder")}
-            className="flex-1 p-3 border-2 border-game-primary/20 rounded-lg focus:border-game-primary focus:outline-none transition-colors"
+            className="game-input flex-1"
             disabled={isLoading}
             whileFocus={{ scale: 1.02 }}
           />
           <motion.button
             type="submit"
             disabled={isLoading}
-            className="bg-game-primary text-white px-6 py-3 rounded-lg hover:bg-game-secondary transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="game-button"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-5 h-5 animate-spin mr-2 inline" />
                 {t("loading")}
               </>
             ) : (
@@ -106,7 +112,7 @@ const GameForm = ({
             )}
           </motion.button>
         </div>
-      </motion.form>
+      </form>
     </motion.div>
   );
 };
