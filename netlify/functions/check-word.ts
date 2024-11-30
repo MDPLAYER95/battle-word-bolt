@@ -19,7 +19,7 @@ const handler: Handler = async (event) => {
     };
   }
 
-  const { word, previousWords, currentWord } = parsedBody;
+  const { word, previousWords, currentWord, language = 'fr' } = parsedBody;
 
   if (!word || !Array.isArray(previousWords) || typeof currentWord !== "string") {
     return {
@@ -36,6 +36,14 @@ const handler: Handler = async (event) => {
     };
   }
 
+  const languagePrompts = {
+    fr: "LE JEU SE DEROULE EN FRANÇAIS, donc tu ne réponds qu'en FRANÇAIS.",
+    en: "THE GAME IS IN ENGLISH, so you only respond in ENGLISH.",
+    de: "DAS SPIEL IST AUF DEUTSCH, also antwortest du nur auf DEUTSCH.",
+    es: "EL JUEGO ESTÁ EN ESPAÑOL, así que solo respondes en ESPAÑOL.",
+    it: "IL GIOCO È IN ITALIANO, quindi rispondi solo in ITALIANO."
+  };
+
   try {
     // Appel à l'API OpenAI
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -49,7 +57,7 @@ const handler: Handler = async (event) => {
         messages: [
           {
             role: "system",
-            content: `Tu es un jeu, voici les règles :
+            content: `${languagePrompts[language]}
 
 # But du jeu :
 L'utilisateur doit proposer un mot qui "bat" le mot précédent en respectant les règles définies ci-dessous.
